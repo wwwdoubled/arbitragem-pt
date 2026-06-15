@@ -11,6 +11,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database.models import init_db, get_session, Produto
 
 # ── Configuração da página ───────────────────────────────────────────────────
+init_db()
+_seed_demo_se_vazio()
+
 st.set_page_config(
     page_title="Arbitragem PT",
     page_icon="💰",
@@ -63,6 +66,45 @@ st.markdown("""
 
 
 # ── Carregamento de dados ────────────────────────────────────────────────────
+def _seed_demo_se_vazio():
+    """Insere dados de demo se a BD estiver vazia (ex: Streamlit Cloud)."""
+    session = get_session()
+    try:
+        if session.query(Produto).count() == 0:
+            from datetime import timedelta
+            demo = [
+                {"titulo": "iPhone 13 128GB Preto - Como Novo", "preco_compra": 320.0, "fonte": "OLX", "categoria": "Telemóveis", "localizacao": "Lisboa", "estado": "Bom estado", "url": "https://demo.olx.pt/1"},
+                {"titulo": "PlayStation 5 Digital Edition + 2 Jogos", "preco_compra": 350.0, "fonte": "OLX", "categoria": "Videojogos", "localizacao": "Porto", "estado": "Muito bom estado", "url": "https://demo.olx.pt/2"},
+                {"titulo": "MacBook Air M1 8GB 256GB Space Grey", "preco_compra": 650.0, "fonte": "OLX", "categoria": "Informática", "localizacao": "Braga", "estado": "Bom estado", "url": "https://demo.olx.pt/3"},
+                {"titulo": "Nintendo Switch OLED Branco + 5 Jogos", "preco_compra": 200.0, "fonte": "OLX", "categoria": "Videojogos", "localizacao": "Lisboa", "estado": "Novo", "url": "https://demo.olx.pt/4"},
+                {"titulo": "iPad Pro 11 M2 256GB WiFi", "preco_compra": 550.0, "fonte": "OLX", "categoria": "Informática", "localizacao": "Setúbal", "estado": "Muito bom estado", "url": "https://demo.olx.pt/5"},
+                {"titulo": "Sony WH-1000XM5 Headphones Black", "preco_compra": 140.0, "fonte": "OLX", "categoria": "Audio", "localizacao": "Faro", "estado": "Bom estado", "url": "https://demo.olx.pt/6"},
+                {"titulo": "Rolex Submariner 116610LN 2019", "preco_compra": 6500.0, "fonte": "OLX", "categoria": "Relógios", "localizacao": "Lisboa", "estado": "Muito bom estado", "url": "https://demo.olx.pt/7"},
+                {"titulo": "Nike Air Jordan 1 Retro High OG sz42", "preco_compra": 85.0, "fonte": "Vinted", "categoria": "Sapatilhas", "localizacao": "", "estado": "Bom estado", "url": "https://demo.vinted.pt/1"},
+                {"titulo": "Adidas Yeezy 350 V2 Zebra sz43", "preco_compra": 120.0, "fonte": "Vinted", "categoria": "Sapatilhas", "localizacao": "", "estado": "Bom estado", "url": "https://demo.vinted.pt/2"},
+                {"titulo": "LEGO Technic Bugatti Chiron 42083", "preco_compra": 150.0, "fonte": "Vinted", "categoria": "Brinquedos", "localizacao": "", "estado": "Muito bom estado", "url": "https://demo.vinted.pt/3"},
+                {"titulo": "Ralph Lauren Polo Shirt L vintage navy", "preco_compra": 18.0, "fonte": "Vinted", "categoria": "Vestuário", "localizacao": "", "estado": "Bom estado", "url": "https://demo.vinted.pt/4"},
+                {"titulo": "iPhone 12 Pro 256GB Cinzento Sideral", "preco_compra": 290.0, "fonte": "Vinted", "categoria": "Telemóveis", "localizacao": "", "estado": "Bom estado", "url": "https://demo.vinted.pt/5"},
+                {"titulo": "New Balance 550 White Green sz41", "preco_compra": 55.0, "fonte": "Vinted", "categoria": "Sapatilhas", "localizacao": "", "estado": "Bom estado", "url": "https://demo.vinted.pt/6"},
+                {"titulo": "Nintendo Switch OLED sz - Vinted", "preco_compra": 185.0, "fonte": "Vinted", "categoria": "Videojogos", "localizacao": "", "estado": "Bom estado", "url": "https://demo.vinted.pt/7"},
+            ]
+            now = datetime.utcnow()
+            fator = {"OLX": 1.5, "Vinted": 1.6}
+            for i, p in enumerate(demo):
+                f = fator[p["fonte"]]
+                pv = round(p["preco_compra"] * f, 2)
+                session.add(Produto(
+                    titulo=p["titulo"], preco_compra=p["preco_compra"],
+                    preco_venda_est=pv, lucro_abs=round(pv - p["preco_compra"], 2),
+                    margem_lucro=round((pv - p["preco_compra"]) / p["preco_compra"] * 100, 1),
+                    fonte=p["fonte"], categoria=p["categoria"], url=p["url"],
+                    imagem_url="", localizacao=p["localizacao"], estado=p["estado"],
+                    data_encontrado=now,
+                ))
+            session.commit()
+    finally:
+        session.close()
+
 @st.cache_data(ttl=60)
 def carregar_dados() -> pd.DataFrame:
     init_db()

@@ -84,7 +84,9 @@ gh repo create arbitragem-pt \
     # Se o repo já existe, só faz push
     echo "   (repo já existe — a fazer push...)"
     git remote add origin "https://github.com/$(gh api user --jq .login)/arbitragem-pt.git" 2>/dev/null || true
-    git push -u origin main
+    # Detecta nome do branch atual e faz push
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    git push -u origin "$BRANCH"
   }
 
 echo ""
